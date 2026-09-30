@@ -3,6 +3,7 @@ from fastmcp.server.dependencies import get_http_headers
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 import json
+import os
 import requests
 from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, Prefetch, FusionQuery, Fusion
@@ -19,8 +20,30 @@ from config import (
 
 mcp = FastMCP(name=SERVER_NAME)
 
+# Описание объекта в ответе MCP: синоним + состав + начало модулей. Полный код объектов
+# (до 70+ тыс. символов) забивал контекст клиента; целиком код читается из выгрузки.
+MAX_DESC_CHARS = int(os.getenv("MAX_DESC_CHARS", "6000"))
+
+
+def short_desc(doc: str) -> str:
+    if len(doc) <= MAX_DESC_CHARS:
+        return doc
+    return doc[:MAX_DESC_CHARS] + f"\n... (обрезано: показано {MAX_DESC_CHARS} из {len(doc)} символов)"
+
 # Подключение к Qdrant
 qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+
+
+# Типы объектов в единственном числе - так их пишет index_from_files.py (TYPE_MAP)
+ObjectType = Literal[
+    "Справочник", "Документ", "РегистрСведений", "РегистрНакопления", "РегистрБухгалтерии",
+    "РегистрРасчета", "Константа", "Перечисление", "ПланВидовХарактеристик", "ПланСчетов",
+    "ПланВидовРасчета", "ПланОбмена", "ОбщийМодуль", "Обработка", "Отчет", "ЖурналДокументов",
+    "ПодпискаНаСобытие", "РегламентноеЗадание", "ОбщаяФорма", "ОбщаяКоманда", "Роль",
+    "БизнесПроцесс", "Задача", "HTTPСервис", "WebСервис", "ПакетXDTO", "ОпределяемыйТип",
+    "ПараметрСеанса", "ОбщийРеквизит", "Подсистема", "КритерийОтбора", "ФункциональнаяОпция",
+    "Последовательность",
+]
 
 
 class SearchRequest(BaseModel):
@@ -30,8 +53,7 @@ class SearchRequest(BaseModel):
         min_length=1,
         max_length=500
     )
-    object_type: Literal["Справочник", "Документ", "РегистрСведений", "РегистрНакопления",
-                         "Константа", "Перечисление", "ПланВидовХарактеристик"] | None = Field(
+    object_type: ObjectType | None = Field(
         default=None,
         description="Фильтр по типу объекта конфигурации 1С. Если не указан, поиск выполняется по всем типам объектов"
     )
@@ -54,8 +76,7 @@ class SearchRequestMCP(BaseModel):
         min_length=1,
         max_length=500
     )
-    object_type: Literal["Справочник", "Документ", "РегистрСведений", "РегистрНакопления",
-                         "Константа", "Перечисление", "ПланВидовХарактеристик"] | None = Field(
+    object_type: ObjectType | None = Field(
         default=None,
         description="Фильтр по типу объекта конфигурации 1С. Если не указан, поиск выполняется по всем типам объектов"
     )
@@ -199,7 +220,7 @@ def search_1c_documentation(search_params: SearchRequestMCP) -> str:
             formatted_results.append(f"Объект: {result['object_name']}")
             formatted_results.append(f"Тип: {result['object_type']}")
             formatted_results.append(f"Описание:")
-            formatted_results.append(f"{result['description']}")
+            formatted_results.append(short_desc(result['description']))
             formatted_results.append("---")
 
         return "\n".join(formatted_results)

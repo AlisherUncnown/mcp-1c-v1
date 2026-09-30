@@ -42,6 +42,9 @@ def load_config():
 
 config = load_config()
 
+# Small encode batches: no long 100% GPU bursts on the laptop card
+ENCODE_BATCH = int(os.getenv("EMB_BATCH", "16"))
+
 # Define request model
 
 
@@ -57,6 +60,10 @@ try:
     trust_remote_code = config["model"]["trust_remote_code"]
     model = SentenceTransformer(
         model_name, trust_remote_code=trust_remote_code)
+    # fp16 on GPU: ~half the compute and heat on the laptop RTX 3050, vectors stay
+    # practically identical (cosine vs fp32 checked > 0.999). EMB_FP16=0 disables it.
+    if model.device.type == "cuda" and os.getenv("EMB_FP16", "1") == "1":
+        model.half()
 
     # Get model info
     model_info = config["models_info"].get(model_name, {})
@@ -95,6 +102,7 @@ async def generate_embeddings(request: EmbeddingRequest):
             # For models that don't support task parameter (like all-MiniLM-L6-v2)
             embeddings = model.encode(
                 texts,
+                batch_size=ENCODE_BATCH,
                 normalize_embeddings=True,
                 convert_to_numpy=True
             )

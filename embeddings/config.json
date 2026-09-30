@@ -1,6 +1,6 @@
 {
     "model": {
-        "name": "all-MiniLM-L6-v2",
+        "name": "deepvk/USER-bge-m3",
         "trust_remote_code": true,
         "default_task": "retrieval.passage"
     },
@@ -14,6 +14,10 @@
             "supports_task": true
         },
         "Qwen/Qwen3-Embedding-0.6B": {
+            "dimensions": 1024,
+            "supports_task": false
+        },
+        "deepvk/USER-bge-m3": {
             "dimensions": 1024,
             "supports_task": false
         }
