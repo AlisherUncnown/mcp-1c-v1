@@ -9,6 +9,10 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
+# torch with CUDA 12.6 (host driver 566.07 supports CUDA up to 12.7); installed first so
+# requirements.txt finds torch already satisfied and does not pull a CPU/other-CUDA build
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cu126
+
 # Copy requirements first for better caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

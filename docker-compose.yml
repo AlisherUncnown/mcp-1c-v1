@@ -31,6 +31,14 @@ services:
     volumes:
       - ./embeddings/config.json:/app/config.json:ro
       - ./embeddings/models:/root/.cache/huggingface/hub
+    deploy:
+      resources:
+        reservations:
+          devices:
+            # only the discrete NVIDIA RTX 3050 Laptop (integrated Intel Iris Xe has no CUDA)
+            - driver: nvidia
+              device_ids: [ "GPU-6132e981-5ecf-b330-f752-c7fe772938c2" ]
+              capabilities: [ gpu ]
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://embedding-service:5000/health" ]
       interval: 30s

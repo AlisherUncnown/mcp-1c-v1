@@ -64,7 +64,7 @@ try:
     supports_task = model_info.get("supports_task", False)
 
     logger.info(
-        f"Model {model_name} loaded successfully with {model_dimensions} dimensions")
+        f"Model {model_name} loaded successfully with {model_dimensions} dimensions on device {model.device}")
 except Exception as e:
     logger.error(f"Failed to load model: {e}")
     raise e
