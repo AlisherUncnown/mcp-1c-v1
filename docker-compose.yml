@@ -28,6 +28,10 @@ services:
     container_name: embedding-service
     ports:
       - "5000:5000"
+    environment:
+      # щадящий режим ноутбучной RTX 3050: мелкие пакеты - ниже пиковое потребление и нагрев (02.10.2026)
+      - EMB_BATCH=8
+      - EMB_FP16=1
     volumes:
       - ./embeddings/config.json:/app/config.json:ro
       - ./embeddings/models:/root/.cache/huggingface/hub
