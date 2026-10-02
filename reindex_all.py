@@ -8,6 +8,7 @@
 MIN_OVERLAP старых имён объектов - коллекция не трогается (источник, видимо, не тот).
 Бэкап коллекций до переиндексации: qdrant_backup_<дата>/<коллекция>.snapshot.
 """
+import os
 import sys
 import time
 import uuid
@@ -23,19 +24,23 @@ EMBED = "http://localhost:5000"
 MIN_OVERLAP = 0.9
 
 # Бережём ноутбучную RTX 3050: пауза при нагреве, передышка между пакетами
-GPU_HOT_C = 75          # при этой температуре - пауза
-GPU_COOL_C = 65         # продолжать после остывания до этой
-PAUSE_BETWEEN = 0.3     # с, после каждого запроса к сервису эмбеддингов
+GPU_HOT_C = 68          # при этой температуре - пауза (было 75, снижено 02.10.2026 по просьбе пользователя)
+GPU_COOL_C = 58         # продолжать после остывания до этой (было 65)
+PAUSE_BETWEEN = 0.6     # с, после каждого запроса к сервису эмбеддингов (было 0.3)
 MAX_UPSERT_BYTES = 8 * 1024 * 1024  # qdrant рвёт соединение на запросах > 32 МБ
 
-DOCS = "C:/Users/user/Documents"
+# Профиль берётся с текущей машины: рабочая - C:/Users/user, домашняя - C:/Users/Али
+HOME = os.environ.get("USERPROFILE", os.path.expanduser("~")).replace("\\", "/")
+DOCS = f"{HOME}/Documents"
+# Выгрузка УТП ССА: на рабочей машине в Documents/UTP_CCA/UTP_CCA, на домашней - отдельный клон ~/utp-cca-config
+UTP_SSA = f"{DOCS}/UTP_CCA/UTP_CCA" if os.path.isdir(f"{DOCS}/UTP_CCA/UTP_CCA") else f"{HOME}/utp-cca-config"
 SOURCES = {
     "roznica_config":     f"{DOCS}/Проект Новая Розница Садыхан",
     "sadykhan_roznica":   f"{DOCS}/Садыхан",
     "erp_config":         f"{DOCS}/ЕРП_Проект/ЕРПВыгрузка",
     "erp_sadykhan":       f"{DOCS}/ЕРП_Проект/СадыханРасширение",
     "erp_migration":      f"{DOCS}/ЕРП_Проект/МиграцияРасширение",
-    "utp_ssa":            f"{DOCS}/UTP_CCA/UTP_CCA",
+    "utp_ssa":            UTP_SSA,
     "liderplus_buhnya":   f"{DOCS}/liderplus Бухня ПРОД Хмл/liderplus Бухня ПРОД",
     "liderplus_sadykhan": f"{DOCS}/liderplus Бухня ПРОД Хмл/СадыханРасширениеБухня",
     "liderplus_sd":       f"{DOCS}/liderplus Бухня ПРОД Хмл/СДРасширениеБухня",
